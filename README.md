@@ -15,7 +15,7 @@ For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
 
-[![Musicplayer]](https://youtube.com/shorts/NPY9mpHrUZA?si=th-LDDAkvXRXHfkt)
-[![Musicplayer](/assets/images/musicplayer.png)](https://youtu.be/lMjltLcFiEk)
-[![Musicplayer](/assets/images/musicplayer.png)](https://youtube.com/shorts/Fy8O69zrvwE)
+[Musicplayer video 1](https://youtube.com/shorts/NPY9mpHrUZA?si=th-LDDAkvXRXHfkt)
+[Musicplayer video 2](https://youtu.be/lMjltLcFiEk)
+[Musicplayer video 3](https://youtube.com/shorts/Fy8O69zrvwE)
 
