@@ -1,9 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:music_player/model/music_provider.dart';
 import 'package:music_player/songs/song_data.dart';
 import 'package:music_player/views/album/TJ.dart';
-import 'package:music_player/views/playlist_page.dart';
 import 'package:provider/provider.dart';
 import 'package:music_player/model/playlist_provider.dart';
 import 'package:music_player/views/album/nont_tanont.dart';
@@ -40,11 +40,14 @@ class _HomepageState extends State<Homepage> {
         body: Stack(
           alignment: Alignment.topLeft,
           children: [
-            Container(
-              width: MediaQuery.of(context).size.width,
-              height: MediaQuery.of(context).size.height * .6,
-              decoration: const BoxDecoration(
-                color: Color.fromARGB(240, 2, 173, 136),
+            // ย้าย Container ไปไว้ที่ตำแหน่งสุดท้าย (พื้นหลังด้านหลัง)
+            Positioned.fill(
+              child: Container(
+                width: MediaQuery.of(context).size.width,
+                height: MediaQuery.of(context).size.height * .6,
+                decoration: const BoxDecoration(
+                  color: Color.fromARGB(240, 2, 173, 136),
+                ),
               ),
             ),
             SingleChildScrollView(
@@ -82,7 +85,8 @@ class _HomepageState extends State<Homepage> {
                         child: Row(
                           children: [
                             Consumer2<MusicProvider, PlaylistProvider>(builder:
-                                (context, musicProvider, playlistProvider,child) {
+                                (context, musicProvider, playlistProvider,
+                                    child) {
                               return Row(
                                 children: randomSongs.map((song) {
                                   return Padding(
@@ -168,70 +172,71 @@ class _HomepageState extends State<Homepage> {
                       ),
                       Consumer<PlaylistProvider>(
                           builder: (context, playlistProvider, child) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
+                        final userId = FirebaseAuth.instance.currentUser?.uid;
+                        if (userId == null) {
+                          return Padding(
+                              padding: EdgeInsets.all(
+                                  10)); // ถ้าไม่มี userId ให้ return Container() (ไม่แสดง UI)
+                        }
+                        if (playlistProvider.allSongs.isEmpty) {
+                          return SizedBox
+                              .shrink(); // ถ้าไม่มีเพลงใน Playlist ให้ไม่แสดงอะไรเลย
+                        }
+                        return Visibility(
+                          visible: playlistProvider.allSongs.isNotEmpty,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                            ),
+                            child: playlistProvider.allSongs.isNotEmpty
+                                ? Text(
+                                    "Your Playlists",
+                                    style: TextStyle(fontSize: 22),
+                                  )
+                                : Container(),
                           ),
-                          child: playlistProvider.allSongs.isNotEmpty
-                              ? Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      "Your Playlists",
-                                      style: TextStyle(fontSize: 22),
-                                    ),
-                                    GestureDetector(
-                                      onTap: () {
-                                        // เมื่อกด "แสดงทั้งหมด" จะนำไปที่หน้า PlaylistPage
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) =>
-                                                  PlaylistPage()),
-                                        );
-                                      },
-                                      child: Text(
-                                        "แสดงทั้งหมด",
-                                        style: TextStyle(
-                                          fontSize: 14, color: Colors.white,
-                                          decoration: TextDecoration
-                                              .underline, // เส้นขีดใต้
-                                          decorationColor: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                )
-                              : Container(),
                         );
                       }),
                       Consumer2<MusicProvider, PlaylistProvider>(
                         builder:
                             (context, musicProvider, playlistProvider, child) {
-                          return SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            physics: const BouncingScrollPhysics(),
-                            padding: const EdgeInsets.all(20),
-                            child: Row(
-                              children: playlistProvider.allSongs.map((song) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 16),
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      musicProvider.stopMusic();
-                                      // playlistProvider.stopMusic();
-                                      playlistProvider.currentSongIndex =
-                                          playlistProvider.allSongs
-                                              .indexOf(song);
-                                    },
-                                    child: SongCard(
-                                      image: AssetImage(song.albumArtImagePath),
-                                      label: song.songName,
+                          final userId = FirebaseAuth.instance.currentUser?.uid;
+                          if (userId == null) {
+                            return Padding(
+                                padding: EdgeInsets.all(
+                                    10)); // ถ้าไม่มี userId ให้ return Container() (ไม่แสดง UI)
+                          }
+                          if (playlistProvider.allSongs.isEmpty) {
+                            return SizedBox
+                                .shrink(); // ถ้าไม่มีเพลงใน Playlist ให้ไม่แสดงอะไรเลย
+                          }
+                          return Visibility(
+                            visible: playlistProvider.allSongs.isNotEmpty,
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              physics: const BouncingScrollPhysics(),
+                              padding: const EdgeInsets.all(20),
+                              child: Row(
+                                children: playlistProvider.allSongs.map((song) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(right: 16),
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        musicProvider.stopMusic();
+
+                                        playlistProvider.currentSongIndex =
+                                            playlistProvider.allSongs
+                                                .indexOf(song);
+                                      },
+                                      child: SongCard(
+                                        image:
+                                            AssetImage(song.albumArtImagePath),
+                                        label: song.songName,
+                                      ),
                                     ),
-                                  ),
-                                );
-                              }).toList(),
+                                  );
+                                }).toList(),
+                              ),
                             ),
                           );
                         },

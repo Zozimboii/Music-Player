@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -10,6 +11,7 @@ import 'components/music_player_bar.dart';
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  await forceLogout();
   runApp(MultiProvider(providers: [
     ChangeNotifierProvider(create: (context) => PlaylistProvider()),
     ChangeNotifierProvider(create: (context) => MusicProvider())
@@ -18,12 +20,15 @@ void main() async{
 
 class MyWidget extends StatefulWidget {
   const MyWidget({super.key});
-
+  
   @override
   State<MyWidget> createState() => _MyWidgetState();
 }
-
+Future<void> forceLogout() async {
+  await FirebaseAuth.instance.signOut();
+}
 class _MyWidgetState extends State<MyWidget> {
+  
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

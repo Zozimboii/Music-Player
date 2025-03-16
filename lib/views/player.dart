@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:music_player/model/playlist_provider.dart';
 import 'package:provider/provider.dart';
@@ -5,7 +6,15 @@ import '../model/music_provider.dart';
 import '../components/neu_box.dart';
 import '../songs/song_data.dart';
 
-class PlayerPage extends StatelessWidget {
+class PlayerPage extends StatefulWidget {
+  final Song song; // รับข้อมูลเพลง
+
+  const PlayerPage({super.key, required this.song});
+  @override
+  State<PlayerPage> createState() => _PlayerPageState();
+}
+
+class _PlayerPageState extends State<PlayerPage> {
   @override
   Widget build(BuildContext context) {
     final musicProvider = Provider.of<MusicProvider>(context);
@@ -21,9 +30,13 @@ class PlayerPage extends StatelessWidget {
       );
     }
 
-    final Song currentSong = isMusicProviderActive
+    final Song? currentSong = isMusicProviderActive
+    ? (musicProvider.currentSongIndex != null && musicProvider.currentSongIndex! < musicProvider.allSongs.length)
         ? musicProvider.allSongs[musicProvider.currentSongIndex!]
-        : playlistProvider.allSongs[playlistProvider.currentSongIndex!];
+        : null
+    : (playlistProvider.currentSongIndex != null && playlistProvider.currentSongIndex! < playlistProvider.allSongs.length)
+        ? playlistProvider.allSongs[playlistProvider.currentSongIndex!]
+        : null;
 
     String formatTime(Duration duration) {
       String twoDigitSeconds =
@@ -50,43 +63,74 @@ class PlayerPage extends StatelessWidget {
                         : "Playing from Playlist",
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                   ),
-                  PopupMenuButton<String>(
-                    onSelected: (value) {
-                      if (value == 'Add to Playlist') {
-                        playlistProvider.addSongToLibrary(currentSong);
-                      } else if (value == 'Remove from Playlist') {
-                        playlistProvider.removeSongFromLibrary(currentSong);
-                      }
-                    },
-                    itemBuilder: (BuildContext context) {
-                      bool isInPlaylist =
-                          playlistProvider.isInPlaylist(currentSong);
-                      return [
-                        if (!isInPlaylist)
-                          PopupMenuItem<String>(
-                            value: 'Add to Playlist',
-                            child: Row(
-                              children: [
-                                Icon(Icons.playlist_add),
-                                SizedBox(width: 10),
-                                Text('Add to Playlist'),
-                              ],
-                            ),
-                          )
-                        else
-                          PopupMenuItem<String>(
-                            value: 'Remove from Playlist',
-                            child: Row(
-                              children: [
-                                Icon(Icons.delete),
-                                SizedBox(width: 10),
-                                Text('Remove from Playlist'),
-                              ],
-                            ),
-                          ),
-                      ];
-                    },
-                  ),
+                  Consumer<PlaylistProvider>(
+  builder: (context, playlistProvider, snapshot) {
+    return PopupMenuButton<String>(
+      onSelected: (value) async {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user == null) {
+          // ถ้ายังไม่ได้ล็อกอิน แสดงข้อความเตือน
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('กรุณาเข้าสู่ระบบก่อนเพิ่มเพลงใน Playlist'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return; // ออกจากฟังก์ชัน ไม่ต้องเพิ่มเพลง
+        }
+      final song = widget.song;
+        if (value == 'Add to Playlist') {
+          // เพิ่มเพลงไปยัง Playlist
+          await playlistProvider.addToPlaylist(song);
+          // บันทึก Playlist ที่อัปเดตใน Firestore
+          await playlistProvider.savePlaylist(
+            playlistProvider.allSongs.map((s) => {
+              "songName": s.songName,
+              "artistName": s.artistName,
+              "albumArtImagePath": s.albumArtImagePath,
+              "audioPath": s.audioPath,
+            }).toList(),
+          );
+        } else if (value == 'Remove from Playlist') {
+          // ลบเพลงออกจาก Playlist
+          await playlistProvider.removeSongFromPlaylist(song);
+          playlistProvider.stopMusic();
+          Navigator.pop(context);
+        }
+      },
+      itemBuilder: (BuildContext context) {
+        final song = widget.song;
+        bool isInPlaylist = playlistProvider.isInPlaylist(song);
+        return [
+          // เมื่อลิสต์เพลงไม่อยู่ใน Playlist
+          if (!isInPlaylist)
+            PopupMenuItem<String>(
+              value: 'Add to Playlist',
+              child: Row(
+                children: [
+                  Icon(Icons.playlist_add),
+                  SizedBox(width: 10),
+                  Text('Add to Playlist'),
+                ],
+              ),
+            )
+          // เมื่อลิสต์เพลงอยู่ใน Playlist
+          else
+            PopupMenuItem<String>(
+              value: 'Remove from Playlist',
+              child: Row(
+                children: [
+                  Icon(Icons.delete),
+                  SizedBox(width: 10),
+                  Text('Remove from Playlist'),
+                ],
+              ),
+            ),
+        ];
+      },
+    );
+  },
+)
                 ],
               ),
               Padding(
@@ -97,7 +141,7 @@ class PlayerPage extends StatelessWidget {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.asset(
-                          currentSong.albumArtImagePath,
+                          currentSong?.albumArtImagePath  ?? 'assets/images/albumnont.jpg',
                           width: 400,
                           height: 300,
                           fit: BoxFit.cover,
@@ -112,12 +156,12 @@ class PlayerPage extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  currentSong.songName,
+                                  currentSong?.songName ?? 'Unknown Song',
                                   style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 20),
                                 ),
-                                Text(currentSong.artistName),
+                                Text(currentSong?.artistName ?? 'Unknown Artist'),
                               ],
                             ),
                             IconButton(

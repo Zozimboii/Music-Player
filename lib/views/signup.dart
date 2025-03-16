@@ -5,7 +5,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../views/loginPage.dart';
 import '../components/my_textfield.dart';
 import '../components/my_button.dart' as btn;
-import './welcome.dart';
 
 class Signup extends StatefulWidget {
   const Signup({super.key});
@@ -76,7 +75,7 @@ Future<void> addUserToMembers() async {
   User? user = FirebaseAuth.instance.currentUser;
   if (user != null) {
     String userId = user.uid;
-    String name = user.displayName ?? "Anonymous"; // หรือรับจาก input
+    String name = nameController.text.trim(); // ใช้ชื่อจากฟอร์มสมัคร
 
     CollectionReference members = FirebaseFirestore.instance.collection('member');
 
@@ -89,6 +88,7 @@ Future<void> addUserToMembers() async {
     });
   }
 }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

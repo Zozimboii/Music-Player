@@ -35,7 +35,7 @@ class MusicPlayerBar extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => PlayerPage(),
+                builder: (context) => PlayerPage(song: song),
               ),
             );
           },
