@@ -14,3 +14,13 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+
+- การแสดงผลหน้าทั่วไป
+[Musicplayer video 1](https://youtube.com/shorts/NPY9mpHrUZA?si=th-LDDAkvXRXHfkt)
+
+- การแสดงผลการ signup and login
+[Musicplayer video 2](https://youtu.be/lMjltLcFiEk)
+
+- การแสดงผลเพิ่ม playlist
+[Musicplayer video 3](https://youtube.com/shorts/Fy8O69zrvwE)
+
