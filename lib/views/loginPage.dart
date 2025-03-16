@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:music_player/navigations/tabbar.dart';
 import 'package:music_player/views/signup.dart';
-import 'profile.dart';
+
 
 class LoginPage extends StatefulWidget {
   final String? uid;

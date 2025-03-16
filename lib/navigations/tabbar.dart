@@ -21,12 +21,13 @@ class _TabbarState extends State<Tabbar> {
 
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
-   @override
+  @override
   void initState() {
     super.initState();
     user = _auth.currentUser; // ตรวจสอบว่าเป็นผู้ใช้ที่ล็อกอินอยู่หรือไม่
     isLoggedIn = user != null; // ถ้ามี user หมายความว่า user ได้ล็อกอิน
   }
+
   final List<Widget> _pages = [
     Homepage(),
     SearchPage(),
@@ -39,7 +40,8 @@ class _TabbarState extends State<Tabbar> {
     });
     _navigatorKey.currentState?.popUntil((route) => route.isFirst);
   }
-@override
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(
