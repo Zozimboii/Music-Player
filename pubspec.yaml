@@ -95,6 +95,12 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
-t:
+# t:
+#   android: true
+#   image_path: "assets/images/spotifyicon.png"
+flutter_icons:
   android: true
-  image_path: "assets/images/spotifyicon.png"
+  ios: true
+  image_path: "assets/images/spotifyicon.png" # เปลี่ยนเป็นที่อยู่ของไอคอนของคุณ
+  adaptive_icon_background: "#ffffff" # สีพื้นหลังของไอคอน (Android Adaptive Icons)
+  adaptive_icon_foreground: "assets/images/spotifyicon.png" # ไอคอนของคุณ (Android Adaptive Icons)

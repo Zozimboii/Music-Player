@@ -40,9 +40,10 @@ class _SearchPageState extends State<SearchPage> {
     final allSongs = musicProvider.allSongs;
 
     final filteredSongs = allSongs.where((song) {
-      return song.songName.toLowerCase().contains(_searchQuery) ||
-          song.artistName.toLowerCase().contains(_searchQuery);
-    }).toList();
+  final songName = song.songName?.toLowerCase() ?? '';
+  final artistName = song.artistName?.toLowerCase() ?? '';
+  return songName.contains(_searchQuery) || artistName.contains(_searchQuery);
+}).toList();
     if (!isShuffled) {
       setState(() {
         shuffledSongs = List.from(filteredSongs)..shuffle();
@@ -93,9 +94,9 @@ class _SearchPageState extends State<SearchPage> {
                                 ? 80
                                 : 0), // เงื่อนไขให้เว้นที่ด้านล่าง
                         child: ListView.builder(
-                          itemCount: shuffledSongs.length,
+                          itemCount: filteredSongs.length,
                           itemBuilder: (context, index) {
-                            final song = shuffledSongs[index];
+                            final song = filteredSongs[index];
 
                             return ListTile(
                               leading: song.albumArtImagePath.isNotEmpty
