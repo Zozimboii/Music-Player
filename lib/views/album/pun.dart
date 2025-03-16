@@ -19,7 +19,7 @@ class _AlbumPunPageState extends State<AlbumPunPage> {
     final musicProvider = Provider.of<MusicProvider>(context);
     final allSongs = musicProvider.allSongs;
     final punSongs =
-        allSongs.where((song) => song.aristName.contains("PUN")).toList();
+        allSongs.where((song) => song.artistName.contains("PUN")).toList();
     return MainLayout(
       child: Scaffold(
         appBar: AppBar(title: Text("Album PUN")),
@@ -51,7 +51,7 @@ class _AlbumPunPageState extends State<AlbumPunPage> {
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       subtitle: Text(
-                        song.aristName,
+                        song.artistName,
                         style: TextStyle(color: Colors.grey),
                       ),
                       trailing: PopupMenuButton<String>(

@@ -39,7 +39,7 @@ class _SearchPageState extends State<SearchPage> {
 
     final filteredSongs = allSongs.where((song) {
       return song.songName.toLowerCase().contains(_searchQuery) ||
-          song.aristName.toLowerCase().contains(_searchQuery);
+          song.artistName.toLowerCase().contains(_searchQuery);
     }).toList();
 
     return MainLayout(
@@ -84,7 +84,7 @@ class _SearchPageState extends State<SearchPage> {
                                  playlistProvider.currentSongIndex != null;
                   List shuffledSongs = List.from(filteredSongs)..shuffle();
                   return Padding(
-            padding: EdgeInsets.only(bottom: isPlaying ? 140 : 60), // เงื่อนไขให้เว้นที่ด้านล่าง
+            padding: EdgeInsets.only(bottom: isPlaying ? 85 : 0), // เงื่อนไขให้เว้นที่ด้านล่าง
             child: ListView.builder(
               itemCount: shuffledSongs.length,
               itemBuilder: (context, index) {
@@ -96,43 +96,66 @@ class _SearchPageState extends State<SearchPage> {
                           width: 50, height: 50, fit: BoxFit.cover)
                       : Icon(Icons.music_note),
                   title: Text(song.songName),
-                  subtitle: Text(song.aristName),
+                  subtitle: Text(song.artistName),
                   trailing: PopupMenuButton<String>(
-                        onSelected: (value) {
-                          if (value == 'Add to Playlist') {
-                            playlistProvider.addSongToLibrary(song);
-                          } else if (value == 'Remove from Playlist') {
-                            playlistProvider.removeSongFromLibrary(song);
-                          }
-                        },
-                        itemBuilder: (BuildContext context) {
-                          bool isInPlaylist = playlistProvider.isInPlaylist(song);
-                          return [
-                            if (!isInPlaylist)
-                              PopupMenuItem<String>(
-                                value: 'Add to Playlist',
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.playlist_add),
-                                    SizedBox(width: 10),
-                                    Text('Add to Playlist'),
-                                  ],
-                                ),
-                              )
-                            else
-                              PopupMenuItem<String>(
-                                value: 'Remove from Playlist',
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.delete),
-                                    SizedBox(width: 10),
-                                    Text('Remove from Playlist'),
-                                  ],
-                                ),
-                              ),
-                          ];
-                        },
-                      ),
+  onSelected: (value) async {
+    if (value == 'Add to Playlist') {
+      // เพิ่มเพลงไปยัง Playlist
+       await playlistProvider.addSongToPlaylist(song);
+      // บันทึก Playlist ที่อัปเดตใน Firestore โดยเก็บข้อมูลทั้งหมดของเพลง
+      await playlistProvider.savePlaylist(
+        playlistProvider.allSongs.map((s) => {
+          "songName": s.songName,
+          "artistName": s.artistName,
+          "albumArtImagePath": s.albumArtImagePath,
+          "audioPath": s.audioPath,
+        }).toList(),
+        
+      );
+      setState(() {});
+    } else if (value == 'Remove from Playlist') {
+      // ลบเพลงออกจาก Playlist
+      playlistProvider.removeSongFromLibrary(song);
+      // บันทึก Playlist ที่อัปเดตใน Firestore โดยเก็บข้อมูลทั้งหมดของเพลง
+      await playlistProvider.savePlaylist(
+        playlistProvider.allSongs.map((s) => {
+          "songName": s.songName,
+          "artistName": s.artistName,
+          "albumArtImagePath": s.albumArtImagePath,
+          "audioPath": s.audioPath,
+        }).toList(),
+      );
+      setState(() {});
+    }
+  },
+  itemBuilder: (BuildContext context) {
+    bool isInPlaylist = playlistProvider.isInPlaylist(song);
+    return [
+      if (!isInPlaylist)
+        PopupMenuItem<String>(
+          value: 'Add to Playlist',
+          child: Row(
+            children: [
+              Icon(Icons.playlist_add),
+              SizedBox(width: 10),
+              Text('Add to Playlist'),
+            ],
+          ),
+        )
+      else
+        PopupMenuItem<String>(
+          value: 'Remove from Playlist',
+          child: Row(
+            children: [
+              Icon(Icons.delete),
+              SizedBox(width: 10),
+              Text('Remove from Playlist'),
+            ],
+          ),
+        ),
+    ];
+  },
+),
                 );
               },
             ),

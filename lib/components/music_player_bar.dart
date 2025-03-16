@@ -54,7 +54,7 @@ class MusicPlayerBar extends StatelessWidget {
                     Text(song.songName,
                         style: TextStyle(
                             fontWeight: FontWeight.bold, color: Colors.white)),
-                    Text(song.aristName, style: TextStyle(color: Colors.white)),
+                    Text(song.artistName, style: TextStyle(color: Colors.white)),
                   ],
                 ),
                 Spacer(),

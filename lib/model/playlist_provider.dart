@@ -1,14 +1,128 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../songs/song_data.dart';
 import 'package:just_audio/just_audio.dart';
 
 class PlaylistProvider extends ChangeNotifier {
+  
+
+// Future<List<Song>> fetchSongsFromFirestore() async {
+//   QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('songs').get();
+
+//   return snapshot.docs.map((doc) {
+//     return Song(
+//       songName: doc['songName'],
+//       artistName: doc['artistName'],
+//       albumArtImagePath: doc['albumArtImagePath'],
+//       audioPath: doc['audioPath'] ?? '',  // ใช้ค่าที่ไม่บังคับหรือค่าเริ่มต้น
+//     );
+//   }).toList();
+// }
+// Future<void> addUserToMembers() async {
+//   User? user = FirebaseAuth.instance.currentUser;
+//   if (user != null) {
+//     String userId = user.uid;
+//     String username = user.displayName ?? "Anonymous"; // หรือรับจาก input
+
+//     CollectionReference members = FirebaseFirestore.instance.collection('members');
+
+//     // เพิ่มข้อมูลผู้ใช้ใหม่ใน members collection
+//     await members.doc(userId).set({
+//       'username': username,
+//       'email': user.email,
+//       'profilePicture': user.photoURL ?? "", // ถ้ามีรูปภาพ
+//       'createdAt': FieldValue.serverTimestamp(),
+//     });
+//   }
+// }
+
+Future<void> loadPlaylist() async {
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId != null) {
+        // ดึงข้อมูล Playlist จาก Firestore
+        DocumentSnapshot memberDoc = await FirebaseFirestore.instance.collection('member').doc(userId).get();
+        if (memberDoc.exists) {
+          List playlistData = memberDoc['playlist'] ?? [];
+          // แปลงข้อมูลเป็น Song objects
+          _allSongs = playlistData.map<Song>((songData) {
+            return Song(
+              songName: songData['songName'] ?? 'Unknown Song',
+              artistName: songData['artistName'] ?? 'Unknown Artist',
+              albumArtImagePath: songData['albumArtImagePath'] ?? 'assets/images/default.jpg',
+              audioPath: songData['audioPath'] ?? 'assets/music/default.mp3',
+            );
+          }).toList();
+          // แจ้งให้ผู้ใช้รู้ว่า playlist ได้ถูกโหลดแล้ว
+        } 
+        notifyListeners(); 
+      }
+    } catch (e) {
+      print("Error loading playlist: $e");
+    }
+  }
+Future<List<String>> getUserPlaylist() async {
+  User? user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    String userId = user.uid;
+
+    DocumentSnapshot memberDoc = await FirebaseFirestore.instance.collection('member').doc(userId).get();
+    if (memberDoc.exists) {
+      List<String> playlist = List<String>.from(memberDoc['playlist']);
+      return playlist;
+    }
+  }
+  notifyListeners();
+  return [];
+  
+}
+void addToPlaylist(Song newSong) async {
+    
+
+    // เพิ่มเพลงเข้า Playlist
+    await addSongToPlaylist(newSong);
+    notifyListeners();
+    // รีเฟรชข้อมูล Playlist ใหม่
+    await loadPlaylist();  // เรียกโหลด Playlist ใหม่
+    notifyListeners();  // รีเฟรช UI ให้แสดงข้อมูล Playlist ล่าสุด
+  }
+Future<void> addSongToPlaylist(Song song) async {
+  final userId = FirebaseAuth.instance.currentUser?.uid;
+  if (userId == null) return;
+
+  final userDoc = FirebaseFirestore.instance.collection('member').doc(userId);
+
+  await userDoc.update({
+    "playlist": FieldValue.arrayUnion([
+      {
+        "songName": song.songName,
+        "artistName": song.artistName,
+        "albumArtImagePath": song.albumArtImagePath,
+        "audioPath": song.audioPath
+      }
+    ])
+  });
+  notifyListeners();
+}
+
+Future<void> savePlaylist(List<Map<String, String>> songs) async {
+  String userId = FirebaseAuth.instance.currentUser!.uid;
+
+  await FirebaseFirestore.instance.collection('member').doc(userId).set({
+    'songs': songs,  // เปลี่ยนจาก List<String> เป็น List<Map<String, String>>
+    'updatedAt': FieldValue.serverTimestamp(),
+  }, SetOptions(merge: true));
+  notifyListeners();
+}
+
   List<Song> _allSongs = [
     
   ];
 
   bool isInPlaylist(Song song) {
     return _allSongs.contains(song);
+    
   }
 
   List<Song> get allSongs => _allSongs;
@@ -43,18 +157,26 @@ class PlaylistProvider extends ChangeNotifier {
   }
 
   Future<void> playMusic(int index) async {
-    if (index < 0 || index >= _allSongs.length) return;
+  if (index < 0 || index >= _allSongs.length) return;
 
-    _currentSongIndex = index;
-    final String path = _allSongs[_currentSongIndex!].audiPath;
+  _currentSongIndex = index;
+  final String path = _allSongs[_currentSongIndex!].audioPath;
 
+  try {
     await _audioPlayer.stop();
-    await _audioPlayer.setAsset(path);
+    // ถ้าใช้ setAsset() ให้ตรวจสอบว่า path อยู่ใน assets
+    if (path.startsWith('assets/')) {
+      await _audioPlayer.setAsset(path);  // ใช้สำหรับไฟล์ใน assets
+    } else {
+      await _audioPlayer.setUrl(path);  // ใช้สำหรับไฟล์จาก URL หรือจากที่อื่น
+    }
     await _audioPlayer.play();
-
     _isPlaying = true;
     notifyListeners();
+  } catch (e) {
+    print("Error playing music: $e");
   }
+}
 
   Future<void> pause() async {
     await _audioPlayer.pause();
@@ -90,14 +212,14 @@ class PlaylistProvider extends ChangeNotifier {
   void playNextSong() {
     if (_currentSongIndex == null) return;
 
-    String currentArtist = _allSongs[_currentSongIndex!].aristName;
+    String currentArtist = _allSongs[_currentSongIndex!].artistName;
     int nextSongIndex = _allSongs.indexWhere((song) =>
-        song.aristName == currentArtist &&
+        song.artistName == currentArtist &&
         _allSongs.indexOf(song) > _currentSongIndex!);
 
     if (nextSongIndex == -1) {
       nextSongIndex =
-          _allSongs.indexWhere((song) => song.aristName == currentArtist);
+          _allSongs.indexWhere((song) => song.artistName == currentArtist);
     }
 
     if (nextSongIndex != -1) {
@@ -113,14 +235,14 @@ class PlaylistProvider extends ChangeNotifier {
 
     if (_currentSongIndex == null) return;
 
-    String currentArtist = _allSongs[_currentSongIndex!].aristName;
+    String currentArtist = _allSongs[_currentSongIndex!].artistName;
     int previousSongIndex = _allSongs.lastIndexWhere((song) =>
-        song.aristName == currentArtist &&
+        song.artistName == currentArtist &&
         _allSongs.indexOf(song) < _currentSongIndex!);
 
     if (previousSongIndex == -1) {
       previousSongIndex =
-          _allSongs.lastIndexWhere((song) => song.aristName == currentArtist);
+          _allSongs.lastIndexWhere((song) => song.artistName == currentArtist);
     }
 
     if (previousSongIndex != -1) {
@@ -181,3 +303,5 @@ class PlaylistProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
+
+// new-------------------

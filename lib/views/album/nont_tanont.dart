@@ -17,7 +17,7 @@ class _AlbumNontPageState extends State<AlbumNontPage> {
     // final playlistProvider = Provider.of<PlaylistProvider>(context);
     final musicProvider = Provider.of<MusicProvider>(context);
     final allSongs = musicProvider.allSongs;
-    final nontSongs = allSongs.where((song) => song.aristName.contains("NONT TANONT")).toList();
+    final nontSongs = allSongs.where((song) => song.artistName.contains("NONT TANONT")).toList();
     return MainLayout(
       child: Scaffold(
         appBar: AppBar(title: Text("Best Mode Playlist")),
@@ -49,7 +49,7 @@ class _AlbumNontPageState extends State<AlbumNontPage> {
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       subtitle: Text(
-                        song.aristName,
+                        song.artistName,
                         style: TextStyle(color: Colors.grey),
                       ),
                       trailing: PopupMenuButton<String>(

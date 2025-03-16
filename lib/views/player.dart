@@ -117,7 +117,7 @@ class PlayerPage extends StatelessWidget {
                                       fontWeight: FontWeight.bold,
                                       fontSize: 20),
                                 ),
-                                Text(currentSong.aristName),
+                                Text(currentSong.artistName),
                               ],
                             ),
                             IconButton(

@@ -1,15 +1,15 @@
 class Song{
     final String songName;
-    final String aristName;
+    final String artistName;
     final String albumArtImagePath;
-    final String audiPath;
+    final String audioPath;
     
 
     Song({
         required this.songName,
-        required this.aristName,
+        required this.artistName,
         required this.albumArtImagePath,
-        required this.audiPath,
+        required this.audioPath,
     });
 
 
@@ -18,10 +18,10 @@ class Song{
     if (identical(this, other)) return true;
     return other is Song &&
         other.songName == songName &&
-        other.aristName == aristName &&
-        other.audiPath == audiPath;
+        other.artistName == artistName &&
+        other.audioPath == audioPath;
   }
 
   @override
-  int get hashCode => songName.hashCode ^ aristName.hashCode ^ audiPath.hashCode;
+  int get hashCode => songName.hashCode ^ artistName.hashCode ^ audioPath.hashCode;
 }

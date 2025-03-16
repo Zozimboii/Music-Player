@@ -17,7 +17,7 @@ class _AlbumTJPageState extends State<AlbumTJPage> {
     // final playlistProvider = Provider.of<PlaylistProvider>(context);
     final musicProvider = Provider.of<MusicProvider>(context);
     final allSongs = musicProvider.allSongs;
-    final tjSongs = allSongs.where((song) => song.aristName.contains("URBOYTJ")).toList();
+    final tjSongs = allSongs.where((song) => song.artistName.contains("URBOYTJ")).toList();
     return MainLayout(
       child: Scaffold(
         appBar: AppBar(title: Text("Playlist Urboy TJ")),
@@ -49,7 +49,7 @@ class _AlbumTJPageState extends State<AlbumTJPage> {
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       subtitle: Text(
-                        song.aristName,
+                        song.artistName,
                         style: TextStyle(color: Colors.grey),
                       ),
                       trailing: PopupMenuButton<String>(

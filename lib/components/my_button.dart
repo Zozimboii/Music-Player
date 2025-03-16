@@ -19,7 +19,7 @@ class MyButton extends StatelessWidget {
           child: Text(
             "Continue",
             style: TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 25),
+                color: Colors.black, fontWeight: FontWeight.bold, fontSize: 25),
           ),
         ),
       ),
@@ -46,7 +46,7 @@ class MyButtonAgree extends StatelessWidget {
           child: Text(
             text,
             style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 25),
+                color: Colors.black, fontWeight: FontWeight.bold, fontSize: 25),
           ),
         ),
       ),

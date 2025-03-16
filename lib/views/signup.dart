@@ -1,23 +1,100 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../views/loginPage.dart';
 import '../components/my_textfield.dart';
 import '../components/my_button.dart' as btn;
-class Signup extends StatelessWidget {
-  Signup({super.key});
+import './welcome.dart';
 
-  // Controllers
+class Signup extends StatefulWidget {
+  const Signup({super.key});
+
+  @override
+  _SignupState createState() => _SignupState();
+}
+
+class _SignupState extends State<Signup> {
+  final TextEditingController nameController = TextEditingController();
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
+  Future<void> saveToFirebase(BuildContext context) async {
+  if (_formKey.currentState!.validate()) {
+    String email = usernameController.text.trim();
+    String password = passwordController.text.trim();
+    String name = nameController.text.trim();
+
+    if (email.isEmpty || password.isEmpty || name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Please fill in all fields")),
+      );
+      return;
+    }
+
+    try {
+      // ✅ สมัครสมาชิกกับ Firebase Authentication
+      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      // ✅ ดึง UID ของผู้ใช้ที่สร้างใหม่
+      String uid = userCredential.user!.uid;
+
+      // ✅ บันทึกข้อมูลลง Firestore (ใช้ UID เป็น doc ID)
+      await FirebaseFirestore.instance.collection("member").doc(uid).set({
+        "UID": uid,
+        "email": email,
+        "name": name,
+        "Password": password,
+      });
+
+      // ✅ เพิ่มข้อมูลผู้ใช้ลงใน members collection
+      await addUserToMembers();  // เรียกใช้ฟังก์ชันนี้ที่นี่
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Signup successful!")),
+      );
+
+      // ✅ ส่งไปหน้า LoginPage พร้อมกับ UID
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => LoginPage(uid: uid),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
+    }
+  }
+}
+Future<void> addUserToMembers() async {
+  User? user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    String userId = user.uid;
+    String name = user.displayName ?? "Anonymous"; // หรือรับจาก input
+
+    CollectionReference members = FirebaseFirestore.instance.collection('member');
+
+    // เพิ่มข้อมูลผู้ใช้ใหม่ใน members collection
+    await members.doc(userId).set({
+      'name': name,
+      'email': user.email,
+      'createdAt': FieldValue.serverTimestamp(),
+      'playlist': []  // เพิ่มข้อมูล playlist ว่าง ๆ ให้กับผู้ใช้
+    });
+  }
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         alignment: Alignment.center,
         children: [
-          // พื้นหลัง
           Container(
             width: MediaQuery.of(context).size.width,
             height: MediaQuery.of(context).size.height,
@@ -33,8 +110,6 @@ class Signup extends StatelessWidget {
               ),
             ),
           ),
-
-          // เนื้อหา
           SingleChildScrollView(
             physics: BouncingScrollPhysics(),
             child: SafeArea(
@@ -44,8 +119,6 @@ class Signup extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-
-                    // ปุ่มย้อนกลับ
                     Align(
                       alignment: Alignment.centerLeft,
                       child: IconButton(
@@ -53,10 +126,7 @@ class Signup extends StatelessWidget {
                         onPressed: () => Navigator.pop(context),
                       ),
                     ),
-
                     SizedBox(height: 20),
-
-                    // หัวข้อ Sign Up
                     const Text(
                       "Sign Up",
                       style: TextStyle(
@@ -65,10 +135,7 @@ class Signup extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-
                     SizedBox(height: 20),
-
-                    // กล่องสมัครสมาชิก (Blur Effect)
                     ClipRRect(
                       borderRadius: BorderRadius.circular(30),
                       child: BackdropFilter(
@@ -90,7 +157,7 @@ class Signup extends StatelessWidget {
                                   textAlign: TextAlign.start,
                                 ),
                                 const Text(
-                                  "Kitti@gmail.com",
+                                  "Enter your email below",
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 20,
@@ -99,24 +166,24 @@ class Signup extends StatelessWidget {
                                   textAlign: TextAlign.start,
                                 ),
                                 SizedBox(height: 20),
-
-                                // ช่อง Email
+                                MyTextField(
+                                  controller: nameController,
+                                  hintText: 'Name',
+                                  obscureText: false,
+                                ),
+                                SizedBox(height: 10),
                                 MyTextField(
                                   controller: usernameController,
                                   hintText: 'Email',
                                   obscureText: false,
                                 ),
                                 SizedBox(height: 10),
-
-                                // ช่อง Password
-                                MyPasswordTextField(
+                                MyTextField(
                                   controller: passwordController,
                                   hintText: 'Password',
                                   obscureText: true,
                                 ),
                                 SizedBox(height: 20),
-
-                                // ข้อความ Terms of Service
                                 RichText(
                                   text: const TextSpan(
                                     children: [
@@ -136,17 +203,10 @@ class Signup extends StatelessWidget {
                                   ),
                                 ),
                                 SizedBox(height: 10),
-
-                                // ปุ่ม Agree and Continue
                                 btn.MyButtonAgree(
                                   text: "Agree and Continue",
-                                  onTap: () {
-                                    if (_formKey.currentState!.validate()) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder: (context) => LoginPage()),
-                                      );
-                                    }
+                                  onTap: () async {
+                                    await saveToFirebase(context);
                                   },
                                 ),
                               ],
@@ -155,7 +215,6 @@ class Signup extends StatelessWidget {
                         ),
                       ),
                     ),
-
                     SizedBox(height: 40),
                   ],
                 ),

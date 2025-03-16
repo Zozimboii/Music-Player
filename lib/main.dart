@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
@@ -6,7 +7,9 @@ import './model/playlist_provider.dart';
 import './model/music_provider.dart';
 import 'components/music_player_bar.dart';
 
-void main() {
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(MultiProvider(providers: [
     ChangeNotifierProvider(create: (context) => PlaylistProvider()),
     ChangeNotifierProvider(create: (context) => MusicProvider())
@@ -59,7 +62,7 @@ class MainLayout extends StatelessWidget {
           Positioned(
             left: 10,
             right: 10,
-            bottom: 65,
+            bottom: 10,
             child: Consumer2<MusicProvider, PlaylistProvider>(
               builder: (context, musicProvider, playlistProvider, child) {
                 return musicProvider.currentSongIndex != null ||
